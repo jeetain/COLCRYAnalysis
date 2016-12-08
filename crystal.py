@@ -99,13 +99,13 @@ class lattice:
         """
 
         if ("ppot" not in self.data):
-            self.data["ppot"] = [ [None for x in range(self.meta["nspec"])] for y in range(self.meta["nspec"]) ]
+            self.data["ppot"] = [ [dict() for x in range(self.meta["nspec"])] for y in range(self.meta["nspec"]) ]
 
         assert (i >= 0 and i < self.meta["nspec"]), "index i out of range"
         assert (j >= 0 and j < self.meta["nspec"]), "index j out of range"
 
-        self.data["ppot"][i][j] = u_func
-        self.data["ppot"][j][i] = u_func
+        self.data["ppot"][i][j]["func"] = u_func
+        self.data["ppot"][j][i]["func"] = u_func
 
     def add_rdf (self, i, j, r, gr):
         """
@@ -173,6 +173,12 @@ class lattice:
         # limiting reactant calculation
         Nm = np.min(n_react.astype(int)/self.meta["stoich"].astype(int)) # integer division takes care of rounding
 
+		for i in xrange(0, self.meta["nspec"]):
+            for j in xrange(0, self.meta["nspec"]):
+            	assert ("func" in self.data["ppot"][i][j]), "potentials not all set"
+            	assert ("gr" in self.data["rdf"][i][j]), "g(r) not all set"
+            	assert ("r" in self.data["rdf"][i][j]), "g(r) not all set"
+            	
         for i in xrange(0, self.meta["nspec"]):
             for j in xrange(i, self.meta["nspec"]):
                 # jacobian
@@ -185,7 +191,7 @@ class lattice:
                 # compute energy
                 u = np.empty(len(rv), dtype=np.float)
                 for ri in len(u):
-                    u[ri] = self.data["ppot"][i][j](rv[ri])
+                    u[ri] = self.data["ppot"][i][j]["func"](rv[ri])
 
                 U += self.meta["stoich"]*np.trapz(self.data["rdf"][i][j]["gr"]*jac*u, x=self.data["rdf"][i][j]["r"])
 
