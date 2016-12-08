@@ -187,7 +187,7 @@ class lattice:
                 for ri in len(u):
                     u[ri] = self.data["ppot"][i][j](rv[ri])
 
-                U += self.meta["stoich"]np.trapz(self.data["rdf"][i][j]["gr"]*jac*u, x=self.data["rdf"][i][j]["r"])
+                U += self.meta["stoich"]*np.trapz(self.data["rdf"][i][j]["gr"]*jac*u, x=self.data["rdf"][i][j]["r"])
 
         U *= Nm/2.0
         self.data["energy"] = U
