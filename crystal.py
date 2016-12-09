@@ -361,7 +361,7 @@ if __name__ == "__main__":
         CuAu.set_potential (i,j,u_func)
         CuAu.set_rdf (i,j,r,gr)
     CuAu.energy(bulk)
-	CuAu.save_json("CuAu.json")
+	CuAu.save_json("lib/CuAu.json")
 	
     CsCl = cr.lattice()
     CsCl.set(2,3,[1,1],"CsCl")
@@ -369,7 +369,7 @@ if __name__ == "__main__":
         CsCl.set_potential (i,j,u_func)
         CsCl.set_rdf (i,j,r,gr)
     CsCl.energy(bulk)
-	CsCl.save_json("CsCl.json")
+	CsCl.save_json("lib/CsCl.json")
 
     lattices = [CsCl, CuAu]
     print lattices.sort() # print lattices from lowest energy to highest
