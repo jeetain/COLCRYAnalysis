@@ -9,330 +9,328 @@ import numpy as np
 import json
 
 class lattice:
-    """
-    Class which contains information about a given two or three dimensional lattice
+	"""
+	Class which contains information about a given two or three dimensional lattice
 
     """
 
 	def __init__ (self, json_file="none"):
 		"""
-        Instantiate a lattice class - use a json file if available, otherwise leave empty (default)
-        
-        Parameters
-        ----------
-        json_filename : str
-        	Name of file containing self-consistent information in json file (default="none")
-        
-        """
-        
-        self.clear()
-        
-        if (json_file != "none"):
-        	self.load_json(json_file)
+		Instantiate a lattice class - use a json file if available, otherwise leave empty (default)
 
-    def __lt__(self, other):
-        """
-        Compare two classes based on their energy
+		Parameters
+		----------
+		json_filename : str
+			Name of file containing self-consistent information in json file (default="none")
 
-        Parameters
-        ----------
-        other : lattice
-            Lattice to compare against
+		"""
 
-        """
+		self.clear()
 
-        return self.data["energy"] < other.data["energy"]
+		if (json_file != "none"):
+			self.load_json(json_file)
 
-    def set (self, n=2, dim=3, stoich=[1,1], name="none"):
-        """
-        Set basic information about a lattice class
+	def __lt__(self, other):
+		"""
+		Compare two classes based on their energy
 
-        Parameters
-        ----------
-        n : int
-            Number of species on the lattice (default=2)
-        dim : int
-            Spatial dimensionality of the crystal (default=3)
-        stoich : ndarray
-            Stoichiometry of species on the lattice (default=[1,1])
-        name : str
-            Name of lattice (default="none")
+		Parameters
+		----------
+		other : lattice
+			Lattice to compare against
 
         """
 
-        assert (dim == 2 or dim == 3), "valid dimensions are 2, 3"
-        assert (n >= 1), "must have at least one component"
-        
-        self.meta["nspec"] = n
-        self.meta["dim"] = dim
-        self.set_name(name)
-        self.set_stoich(stoich)
-        
-    def clear (self):
-        """
-        Clear all data and metadata
+		return self.data["energy"] < other.data["energy"]
+
+	def assign (self, n=2, dim=3, stoich=[1,1], name="none"):
+		"""
+		Set basic information about a lattice class
+
+		Parameters
+		----------
+		n : int
+			Number of species on the lattice (default=2)
+		dim : int
+			Spatial dimensionality of the crystal (default=3)
+		stoich : ndarray
+			Stoichiometry of species on the lattice (default=[1,1])
+		name : str
+			Name of lattice (default="none")
 
         """
+
+		assert (dim == 2 or dim == 3), "valid dimensions are 2, 3"
+		assert (n >= 1), "must have at least one component"
+
+		self.meta["nspec"] = n
+		self.meta["dim"] = dim
+		self.set_name(name)
+		self.set_stoich(stoich)
+
+	def clear (self):
+		"""
+		Clear all data and metadata
+
+		"""
 
 		self.meta = {}
-        self.data = {}
+		self.data = {}
 
-    def set_name (self, name):
-        """
-        Assign the crystal a name
+	def set_name (self, name):
+		"""
+		Assign the crystal a name
 
-        """
+		"""
 
-        self.meta["name"] = name
+		self.meta["name"] = name
 
-    def set_stoich (self, stoich):
-        """
-        Specify the stoichiometry of a lattice
+	def set_stoich (self, stoich):
+		"""
+		Specify the stoichiometry of a lattice
 
-        Parameters
-        ----------
-        stoich : ndarray
-            Stoichiometry of species on the lattice
-
-        """
-
-        assert (len(stoich) == self.data["nspec"]), "must specify stoichiometry for each species"
-        self.meta["stoich"] = np.array(stoich, dtype=np.int)
-
-    def set_potential (self, i, j, u_func):
-        """
-        Set the pair potential function, U(r), for species i and j
-
-        Parameters
-        ----------
-        i : int
-            Species index (0 <= i < n)
-        j : int
-            Species index (0 <= j < n)
-        u_func : function
-            Should be a callable function such that u_func(r) returns the pair potential as a function of interparticle separation distance
+		Parameters
+		----------
+		stoich : ndarray
+			Stoichiometry of species on the lattice
 
         """
 
-        if ("ppot" not in self.data):
-            self.data["ppot"] = [ [dict() for x in range(self.meta["nspec"])] for y in range(self.meta["nspec"]) ]
+		assert (len(stoich) == self.meta["nspec"]), "must specify stoichiometry for each species"
+		self.meta["stoich"] = np.array(stoich, dtype=np.int)
 
-        assert (i >= 0 and i < self.meta["nspec"]), "index i out of range"
-        assert (j >= 0 and j < self.meta["nspec"]), "index j out of range"
+	def set_potential (self, i, j, u_func):
+		"""
+		Set the pair potential function, U(r), for species i and j
 
-        self.data["ppot"][i][j]["func"] = u_func
-        self.data["ppot"][j][i]["func"] = u_func
+		Parameters
+		----------
+		i : int
+			Species index (0 <= i < n)
+		j : int
+			Species index (0 <= j < n)
+		u_func : function
+			Should be a callable function such that u_func(r) returns the pair potential as a function of interparticle separation distance
 
-    def add_rdf (self, i, j, r, gr, Ni, Nj, V):
         """
-        Add radial distribution function associated with species j, distributed around species i
 
-        Parameters
-        ----------
-        i : int
-            Species index (0 <= i < self.meta["nspec"]) 
-        j : int
-            Species index (0 <= j < self.meta["nspec"])
-        r : ndarray
-            Midpoint of rbins
-        gr : ndarray
-            Radial distribution function as a function of r
+		if ("ppot" not in self.data):
+			self.data["ppot"] = [ [dict() for x in range(self.meta["nspec"])] for y in range(self.meta["nspec"]) ]
+
+		assert (i >= 0 and i < self.meta["nspec"]), "index i out of range"
+		assert (j >= 0 and j < self.meta["nspec"]), "index j out of range"
+
+		self.data["ppot"][i][j]["func"] = u_func
+		self.data["ppot"][j][i]["func"] = u_func
+
+	def add_rdf (self, i, j, r, gr, Ni, Nj, V):
+		"""
+		Add radial distribution function associated with species j, distributed around species i
+
+		Parameters
+		----------
+		i : int
+			Species index (0 <= i < self.meta["nspec"])
+		j : int
+			Species index (0 <= j < self.meta["nspec"])
+		r : ndarray
+			Midpoint of rbins
+		gr : ndarray
+			Radial distribution function as a function of r
 		Ni : int
 			Number of i atoms in the box used to generate g(r)
 		Nj : int
 			Number of j atoms in the box used to generate g(r)
 		V : double
 			Volume of the box used to compute this g(r)
-			
-        """
 
-        if ("rdf" not in self.data):
-            self.data["rdf"] = [ [dict() for x in range(self.meta["nspec"])] for y in range(self.meta["nspec"]) ]
+		"""
 
-        assert (i >= 0 and i < self.meta["nspec"]), "index i out of range"
-        assert (j >= 0 and j < self.meta["nspec"]), "index j out of range"
+		if ("rdf" not in self.data):
+			self.data["rdf"] = [ [dict() for x in range(self.meta["nspec"])] for y in range(self.meta["nspec"]) ]
+
+		assert (i >= 0 and i < self.meta["nspec"]), "index i out of range"
+		assert (j >= 0 and j < self.meta["nspec"]), "index j out of range"
 		assert (V > 0), "volume <= 0"
-		
-        self.data["rdf"][i][j]["r"] = np.array(r)
-        self.data["rdf"][i][j]["gr"] = np.array(gr)
-        self.data["rdf"][i][j]["V"] = V
-        self.data["rdf"][i][j]["Ni"] = Ni
-        self.data["rdf"][i][j]["Nj"] = Nj
-        self.data["rdf"][j][i]["r"] = np.array(r)
-        self.data["rdf"][j][i]["gr"] = np.array(gr)
-        self.data["rdf"][j][i]["V"] = V
-        self.data["rdf"][j][i]["Ni"] = Nj
-        self.data["rdf"][j][i]["Nj"] = Ni
 
-    def rdf_vmd (self, i, j, filename, Ni, Nj, V):
-        """
-        Read a radial distribution function from a file generated by vmd
+		self.data["rdf"][i][j]["r"] = np.array(r)
+		self.data["rdf"][i][j]["gr"] = np.array(gr)
+		self.data["rdf"][i][j]["V"] = V
+		self.data["rdf"][i][j]["Ni"] = Ni
+		self.data["rdf"][i][j]["Nj"] = Nj
+		self.data["rdf"][j][i]["r"] = np.array(r)
+		self.data["rdf"][j][i]["gr"] = np.array(gr)
+		self.data["rdf"][j][i]["V"] = V
+		self.data["rdf"][j][i]["Ni"] = Nj
+		self.data["rdf"][j][i]["Nj"] = Ni
 
-        Parameters
-        ----------
-        i : int
-            Species index (0 <= i < self.meta["nspec"]) of selection 1
-        j : int
-            Species index (0 <= j < self.meta["nspec"]) of selection 2
-        filename : str
-            Filename containing (r, g(r)) in columns
+	def rdf_vmd (self, i, j, filename, Ni, Nj, V):
+		"""
+		Read a radial distribution function from a file generated by vmd
+
+		Parameters
+		----------
+		i : int
+			Species index (0 <= i < self.meta["nspec"]) of selection 1
+		j : int
+			Species index (0 <= j < self.meta["nspec"]) of selection 2
+		filename : str
+			Filename containing (r, g(r)) in columns
 		Ni : int
 			Number of i atoms in the box used to generate g(r)
 		Nj : int
 			Number of j atoms in the box used to generate g(r)
 		V : double
 			Volume of the box used to compute this g(r)
-			
-        """
 
-        f = open(filename, 'r')
-        r, gr, xx = np.loadtxt(f, unpack=True)
-        f.close()
-        self.add_rdf(i,j,r,gr,Ni,Nj,V)
+		"""
+
+		f = open(filename, 'r')
+		r, gr, xx = np.loadtxt(f, unpack=True)
+		f.close()
+		self.add_rdf(i,j,r,gr,Ni,Nj,V)
 
 	def rdf_vmd2 (self, i, j, filename):
-        """
-        Read a radial distribution function from a file generated by vmd
-        This assumes that Ni, Nj, V have been stored in the comments line
+		"""
+		Read a radial distribution function from a file generated by vmd
+		This assumes that Ni, Nj, V have been stored in an initial comments line, # Ni Nj V
 
-        Parameters
-        ----------
-        i : int
-            Species index (0 <= i < self.meta["nspec"]) of selection 1
-        j : int
-            Species index (0 <= j < self.meta["nspec"]) of selection 2
-        filename : str
-            Filename containing (r, g(r)) in columns
-			
-        """
+		Parameters
+		----------
+		i : int
+			Species index (0 <= i < self.meta["nspec"]) of selection 1
+		j : int
+			Species index (0 <= j < self.meta["nspec"]) of selection 2
+		filename : str
+			Filename containing (r, g(r)) in columns
 
-        f = open(filename, 'r')
-        r, gr, xx = np.loadtxt(f, unpack=True)
-        f.close()
-        f = open(filename, 'r')
-        f.readline()
-        xx = f.readline().strip().split()
-        assert (len(xx) == 3), "bad formatting in g(r) file"
-        Ni, Nj, V = int(xx[0]), int(xx[1]), float(xx[2])
-        self.add_rdf(i,j,r,gr,Ni,Nj,V)
-    
-    def save_json (self, filename):
-    	"""
-    	Save crystal information into a self-consistent json file
-    	Should be called afer all g(r)'s have been loaded
-    	
-    	Parameters
-    	----------
-    	filename : str
-    		Filename to save to
-    		
-    	"""
-    	
-    	for i in xrange(0, self.meta["nspec"]):
-            for j in xrange(0, self.meta["nspec"]):
-            	assert ("gr" in self.data["rdf"][i][j]), "g(r) not all set"
-            	assert ("r" in self.data["rdf"][i][j]), "g(r) not all set"
-            	assert ("V" in self.data["rdf"][i][j]), "g(r) not all set"
-            	assert ("Ni" in self.data["rdf"][i][j]), "g(r) not all set"
-            	assert ("Nj" in self.data["rdf"][i][j]), "g(r) not all set"
-    	
-    	obj = {}
-    	obj["meta"] = copy.deepcopy(self.meta)
-    	obj["data"] = copy.deepcopy(self.data)
-    	if ("ppot" in obj["data"]):
-    		del obj["data"]["ppot"]
-    	
-    	for i in xrange(0, self.meta["nspec"]):
-            for j in xrange(0, self.meta["nspec"]):
-            	obj["data"]["rdf"][i][j]["r"] = obj["data"]["rdf"][i][j]["r"].tolist()
-            	obj["data"]["rdf"][i][j]["gr"] = obj["data"]["rdf"][i][j]["gr"].tolist()
-            	
-    	with open(filename, 'w') as f:
-    		json.dump(obj, f)
-    
-        
-    def load_json (self, filename):
-    	"""
-    	Load class information from a json file
-    	
-    	Parameters
-    	----------
-    	filename : str
-    		Filename to load from
-    		    		
-    	"""   
-        
-        self.clear()
-        
-        with open(filename, 'r') as f:
-    		data = json.load(f)
-    	
-    	# get metadata	
-    	for x in data["meta"]:
-    		self.meta[x] = data["meta"][x]
-    		
-    	# get rdf info from data
-    	for i in xrange(0, self.meta["nspec"]):
-            for j in xrange(i, self.meta["nspec"]):
-            	r = obj["data"]["rdf"][i][j]["r"]
-        		gr = obj["data"]["rdf"][i][j]["gr"]
-        		V = obj["data"]["rdf"][i][j]["V"]
-        		Ni = obj["data"]["rdf"][i][j]["Ni"]
-        		Nj = obj["data"]["rdf"][i][j]["Nj"]
-        		self.add_rdf (i,j,r,gr,Ni,Nj,V)
-        
-    def energy(self, n_react):
-        """
-        Compute the energy of the lattice given the pair potentials currently set
+		"""
 
-        Parameters
-        ----------
-        n_react : ndarray
-            Array of the number of each species available in the bulk to "react"
+		f = open(filename, 'r')
+		r, gr, xx = np.loadtxt(f, unpack=True)
+		f.close()
+		f = open(filename, 'r')
+		xx = f.readline().strip().split()
+		assert (len(xx) == 4), "bad formatting in g(r) file"
+		Ni, Nj, V = int(xx[1]), int(xx[2]), float(xx[3])
+		self.add_rdf(i,j,r,gr,Ni,Nj,V)
 
-        """
+	def save_json (self, filename):
+		"""
+		Save crystal information into a self-consistent json file
+		Should be called afer all g(r)'s have been loaded
 
-        assert (len(n_react) == self.data["nspec"]), "number of species must match"
+		Parameters
+		----------
+		filename : str
+			Filename to save to
 
-        U = 0.0
-
-        # limiting reactant calculation
-        Nm = np.min(n_react.astype(int)/self.meta["stoich"].astype(int)) # integer division takes care of rounding
+		"""
 
 		for i in xrange(0, self.meta["nspec"]):
-            for j in xrange(0, self.meta["nspec"]):
-            	assert ("func" in self.data["ppot"][i][j]), "potentials not all set"
-            	assert ("gr" in self.data["rdf"][i][j]), "g(r) not all set"
-            	assert ("r" in self.data["rdf"][i][j]), "g(r) not all set"
-            	assert ("V" in self.data["rdf"][i][j]), "g(r) not all set"
-            	assert ("Ni" in self.data["rdf"][i][j]), "g(r) not all set"
-            	assert ("Nj" in self.data["rdf"][i][j]), "g(r) not all set"
-            	
-        for i in xrange(0, self.meta["nspec"]):
-            for j in xrange(i, self.meta["nspec"]):
-                # jacobian
-                rv = self.data["rdf"][i][j]["r"]
-                if (self.meta["dim"] == 2):
-                    jac = 2*np.pi*rv
-                elif (self.meta["dim"] == 2):
-                    jac = 4*np.pi*(rv**2)
+			for j in xrange(0, self.meta["nspec"]):
+				assert ("gr" in self.data["rdf"][i][j]), "g(r) not all set"
+				assert ("r" in self.data["rdf"][i][j]), "g(r) not all set"
+				assert ("V" in self.data["rdf"][i][j]), "g(r) not all set"
+				assert ("Ni" in self.data["rdf"][i][j]), "g(r) not all set"
+				assert ("Nj" in self.data["rdf"][i][j]), "g(r) not all set"
 
-                # compute energy
-                u = np.empty(len(rv), dtype=np.float)
-                for ri in len(u):
-                    u[ri] = self.data["ppot"][i][j]["func"](rv[ri])
-				
+		obj = {}
+		obj["meta"] = copy.deepcopy(self.meta)
+		obj["data"] = copy.deepcopy(self.data)
+		if ("ppot" in obj["data"]):
+			del obj["data"]["ppot"]
+
+		for i in xrange(0, self.meta["nspec"]):
+			for j in xrange(0, self.meta["nspec"]):
+				obj["data"]["rdf"][i][j]["r"] = obj["data"]["rdf"][i][j]["r"].tolist()
+				obj["data"]["rdf"][i][j]["gr"] = obj["data"]["rdf"][i][j]["gr"].tolist()
+
+		with open(filename, 'w') as f:
+			json.dump(obj, f)
+
+	def load_json (self, filename):
+		"""
+		Load class information from a json file
+
+		Parameters
+		----------
+		filename : str
+			Filename to load from
+
+		"""
+
+		self.clear()
+
+		with open(filename, 'r') as f:
+			data = json.load(f)
+
+		# get metadata
+		for x in data["meta"]:
+			self.meta[x] = data["meta"][x]
+
+		# get rdf info from data
+		for i in xrange(0, self.meta["nspec"]):
+			for j in xrange(i, self.meta["nspec"]):
+				r = obj["data"]["rdf"][i][j]["r"]
+				gr = obj["data"]["rdf"][i][j]["gr"]
+				V = obj["data"]["rdf"][i][j]["V"]
+				Ni = obj["data"]["rdf"][i][j]["Ni"]
+				Nj = obj["data"]["rdf"][i][j]["Nj"]
+				self.add_rdf (i,j,r,gr,Ni,Nj,V)
+
+	def energy(self, n_react):
+		"""
+		Compute the energy of the lattice given the pair potentials currently set
+
+		Parameters
+		----------
+		n_react : ndarray
+			Array of the number of each species available in the bulk to "react"
+
+		"""
+
+		assert (len(n_react) == self.data["nspec"]), "number of species must match"
+
+		U = 0.0
+
+		# limiting reactant calculation
+		Nm = np.min(n_react.astype(int)/self.meta["stoich"].astype(int)) # integer division takes care of rounding
+
+		for i in xrange(0, self.meta["nspec"]):
+			for j in xrange(0, self.meta["nspec"]):
+				assert ("func" in self.data["ppot"][i][j]), "potentials not all set"
+				assert ("gr" in self.data["rdf"][i][j]), "g(r) not all set"
+				assert ("r" in self.data["rdf"][i][j]), "g(r) not all set"
+				assert ("V" in self.data["rdf"][i][j]), "g(r) not all set"
+				assert ("Ni" in self.data["rdf"][i][j]), "g(r) not all set"
+				assert ("Nj" in self.data["rdf"][i][j]), "g(r) not all set"
+
+		for i in xrange(0, self.meta["nspec"]):
+			for j in xrange(i, self.meta["nspec"]):
+				# jacobian
+				rv = self.data["rdf"][i][j]["r"]
+				if (self.meta["dim"] == 2):
+					jac = 2*np.pi*rv
+				elif (self.meta["dim"] == 2):
+					jac = 4*np.pi*(rv**2)
+
+				# compute energy
+				u = np.empty(len(rv), dtype=np.float)
+				for ri in len(u):
+					u[ri] = self.data["ppot"][i][j]["func"](rv[ri])
+
 				# rdf averaging over density excludes self if i == j
 				Nj = self.data["rdf"][i][j]["Nj"]
 				if (i == j):
 					Nj -= 1
-					
-                U += self.meta["stoich"]*np.trapz(self.data["rdf"][i][j]["gr"]*jac*u, x=rv)*(Nj/self.data["rdf"][i][j]["V"])
 
-        U *= Nm/2.0
-        self.data["energy"] = U
+				U += self.meta["stoich"]*np.trapz(self.data["rdf"][i][j]["gr"]*jac*u, x=rv)*(Nj/self.data["rdf"][i][j]["V"])
 
-        return U
+		U *= Nm/2.0
+		self.data["energy"] = U
+
+		return U
 
 if __name__ == "__main__":
     print "crystal.py"
@@ -356,15 +354,15 @@ if __name__ == "__main__":
     u11 = u11_pot.energy()
 
     CuAu = cr.lattice()
-    CuAu.set(2,3,[1,1],"CuAu")
+    CuAu.assign(2,3,[1,1],"CuAu")
     for (i,j,u_func,r,gr) in [(0,0,u00,r00,gr00), (0,1,u01,r01,gr01), (1,1,u11,r11,gr11)]:
         CuAu.set_potential (i,j,u_func)
         CuAu.set_rdf (i,j,r,gr)
     CuAu.energy(bulk)
 	CuAu.save_json("lib/CuAu.json")
-	
+
     CsCl = cr.lattice()
-    CsCl.set(2,3,[1,1],"CsCl")
+    CsCl.assign(2,3,[1,1],"CsCl")
     for (i,j,u_func,r,gr) in [(0,0,u00,r00,gr00), (0,1,u01,r01,gr01), (1,1,u11,r11,gr11)]:
         CsCl.set_potential (i,j,u_func)
         CsCl.set_rdf (i,j,r,gr)
