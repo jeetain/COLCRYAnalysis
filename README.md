@@ -10,6 +10,12 @@ Status
 
 ---
 
+### Description
+
+From radial distribution functions, calculate the ground state (T --> 0) free energy (potential energy) of 2D and 3D lattices, then rank them. See example/example.ipynb for usage.
+
+---
+
 ### Installation:
 
 ```
