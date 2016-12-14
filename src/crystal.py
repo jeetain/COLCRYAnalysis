@@ -301,7 +301,7 @@ class Lattice:
 		U = 0.0
 
 		# limiting reactant calculation
-		Nm = np.min(n_react.astype(int)/self.meta["stoich"].astype(int)) # integer division takes care of rounding
+		nm = np.min(n_react.astype(int)/self.meta["stoich"].astype(int)) # integer division takes care of rounding
 
 		for i in xrange(0, self.meta["nspec"]):
 			for j in xrange(0, self.meta["nspec"]):
@@ -333,7 +333,7 @@ class Lattice:
 
 				U += self.meta["stoich"]*np.trapz(self.data["rdf"][i][j]["gr"]*jac*u, x=rv)*(nj/self.data["rdf"][i][j]["V"])
 
-		U *= Nm/2.0
+		U *= nm/2.0
 		self.data["energy"] = U
 
 		return U
