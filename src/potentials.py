@@ -13,7 +13,7 @@ class LJLambda:
 	Class for LJ-Lambda potential
 	"""
 	
-	def __init__ (self, lam=1.0, sig=1.0, eps=1.0, rcut=None):
+	def __init__ (self, lam=1.0, sig=1.0, eps=1.0):
 		"""
 		Initialize the class
 		
@@ -25,9 +25,7 @@ class LJLambda:
 			Sigma
 		eps : double 
 			Epsilon
-		rcut : double
-			Cutoff distance (default is None)
-			
+
 		"""
 		
 		self.lam = lam

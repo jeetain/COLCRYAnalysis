@@ -322,10 +322,13 @@ class Lattice:
 					jac = 4*np.pi*(rv**2)
 
 				# compute energy
+				"""
 				u = np.empty(len(rv), dtype=np.float)
 				for ri in len(u):
 					u[ri] = self.data["ppot"][i][j]["func"](rv[ri])
-
+				"""
+				u = self.data["ppot"][i][j]["func"](rv)
+				
 				# rdf averaging over density excludes self if i == j
 				nj = self.data["rdf"][i][j]["Nj"]
 				if (i == j):
@@ -340,43 +343,3 @@ class Lattice:
 
 if __name__ == "__main__":
     print "crystal.py"
-
-    """
-
-    * Tutorial
-
-    Example setup a lattice:
-
-    ```
-    import crystal as cr
-
-    bulk = [100, 100] # Na, Nb in bulk
-
-    u00_pot = jagla(...)
-    u00 = u00_pot.energy()
-    u01_pot = jagla(...)
-    u01 = u01_pot.energy()
-    u11_pot = jagla(...)
-    u11 = u11_pot.energy()
-
-    CuAu = cr.Lattice()
-    CuAu.assign(2,3,[1,1],"CuAu")
-    for (i,j,u_func,r,gr) in [(0,0,u00,r00,gr00), (0,1,u01,r01,gr01), (1,1,u11,r11,gr11)]:
-        CuAu.set_potential (i,j,u_func)
-        CuAu.set_rdf (i,j,r,gr)
-    CuAu.energy(bulk)
-	CuAu.save_json("lib/CuAu.json")
-
-    CsCl = cr.Lattice()
-    CsCl.assign(2,3,[1,1],"CsCl")
-    for (i,j,u_func,r,gr) in [(0,0,u00,r00,gr00), (0,1,u01,r01,gr01), (1,1,u11,r11,gr11)]:
-        CsCl.set_potential (i,j,u_func)
-        CsCl.set_rdf (i,j,r,gr)
-    CsCl.energy(bulk)
-	CsCl.save_json("lib/CsCl.json")
-
-    lattices = [CsCl, CuAu]
-    print lattices.sort() # print lattices from lowest energy to highest
-    ```
-
-    """
