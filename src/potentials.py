@@ -49,3 +49,7 @@ class LJLambda:
 			 
 		u_att = ulj - u_rep
 		return u_rep + self.lam*u_att
+		
+if __name__ == "__main__":
+	print "potentials.py"
+	
