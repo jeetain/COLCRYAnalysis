@@ -35,6 +35,21 @@ class LJLambda:
 		self.div = 2.0**(1./6.)*sig
 		
 	def energy (r):
+		"""
+		Compute the potential energy
+		
+		Parameters
+		----------
+		r : (ndarray, double)
+			Either ndarray or scalar
+			
+		Returns
+		-------
+		(ndarray, double)
+			Potential energy, either as a scalar or ndarray
+			
+		"""
+		
 		ulj = 4.0*self.eps*((self.sig/r)**12 - (self.sig/r)**6)
 		if (isinstance(r, (int,double,float))):
 			if (r <= self.div):
