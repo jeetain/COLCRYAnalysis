@@ -10,13 +10,13 @@ Status
 
 ---
 
-### Description
+## Description
 
 From radial distribution functions, calculate the ground state (T --> 0) free energy (potential energy) of 2D and 3D lattices, then rank them. See example/example.ipynb for usage.
 
 ---
 
-### Installation:
+## Installation:
 
 ```
 $ git clone https://github.com/mahynski/COLCRYAnalysis.git
@@ -24,7 +24,7 @@ $ git clone https://github.com/mahynski/COLCRYAnalysis.git
 
 ---
 
-### Dependencies
+## Dependencies
 
 1. Numpy (http://www.numpy.org/)
 
