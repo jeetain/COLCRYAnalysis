@@ -5,7 +5,7 @@
 @brief Tests lattice class
 """
 
-import sys
+import sys, unittest
 sys.path.append('../src/')
 from potentials import *
 from crystal import *

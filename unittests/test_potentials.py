@@ -5,44 +5,52 @@
 @brief Tests for potential functions
 """
 
-import sys
+import sys, unittest
 sys.path.append('../src/')
 from potentials import *
+import numpy as np
 
 class TestLJLambda(unittest.TestCase):
 	"""
 	Test LJ-Lambda Potential
+
 	"""
 
 	def setUp(self):
 		"""
 		Set up class
+
 		"""
 
-        self.sig = 1.234
-        self.eps = 3.456
+		self.sig = 1.234
+		self.eps = 3.456
+
+	def test_energy_att(self):
+	    """
+	    Test energy for attractive case
+
+	    """
+
+		for lam in np.linspace(-1.0, 1.0, 10):
+			ljl = LJLambda (lam, self.sig, self.eps)
+			self.assertEqual(ljl.energy(self.sig), -lam*self.eps)
+
+	def test_energy_rep(self):
+	    """
+	    Test energy for repulsive case
+
+	    """
+
+	    ljl = LJLambda (-1.0, self.sig, self.eps)
+
+	def test_energy_wca(self):
+	    """
+	    Test energy for the WCA case
+
+	    """
+
+	    ljl = LJLambda (0.0, self.sig, self.eps)
 
 
-    def test_energy_att(self):
-        """
-        Test energy for attractive case
-
-        """
-
-        ljl = LJLambda (1.0, self.sig, self.eps)
-
-    def test_energy_rep(self):
-        """
-        Test energy for repulsive case
-
-        """
-
-        ljl = LJLambda (-1.0, self.sig, self.eps)
-
-    def test_energy_wca(self):
-        """
-        Test energy for the WCA case
-
-        """
-
-        ljl = LJLambda (0.0, self.sig, self.eps)
+if __name__ == "__main__":
+	unittest.main()

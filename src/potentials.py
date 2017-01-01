@@ -6,52 +6,51 @@
 """
 
 import numpy as np
-import json
 
 class LJLambda:
 	"""
 	Class for LJ-Lambda potential
 	"""
-	
+
 	def __init__ (self, lam=1.0, sig=1.0, eps=1.0):
 		"""
-		Initialize the class
-		
+		Initialize the class. Defaults to standard LJ parameters.
+
 		Parameters
 		----------
 		lam : double
 			Lambda value
 		sig : double
 			Sigma
-		eps : double 
+		eps : double
 			Epsilon
 
 		"""
-		
+
 		self.lam = lam
 		self.sig = sig
-		self.eps = 1.0
-		
-		self.div = 2.0**(1./6.)*sig
-		
-	def energy (r):
+		self.eps = eps
+
+		self.div = 2.0**(1./6.)*self.sig
+
+	def energy (self, r):
 		"""
 		Compute the potential energy
-		
+
 		Parameters
 		----------
 		r : (ndarray, double)
 			Either ndarray or scalar
-			
+
 		Returns
 		-------
 		(ndarray, double)
 			Potential energy, either as a scalar or ndarray
-			
+
 		"""
-		
+
 		ulj = 4.0*self.eps*((self.sig/r)**12 - (self.sig/r)**6)
-		if (isinstance(r, (int,double,float))):
+		if (isinstance(r, (int,np.double,float))):
 			if (r <= self.div):
 				u_rep = ulj + self.eps
 			else:
@@ -61,10 +60,9 @@ class LJLambda:
 			u_rep[r > self.div] = 0.0
 		else:
 			raise TypeError('unknown r type')
-			 
+
 		u_att = ulj - u_rep
 		return u_rep + self.lam*u_att
-		
+
 if __name__ == "__main__":
 	print "potentials.py"
-	
