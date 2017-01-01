@@ -1,1 +1,2 @@
 Store JSON files for each lattice in this directory as a library.
+Use make.py to manufacture lattices.
