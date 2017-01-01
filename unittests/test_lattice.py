@@ -1,8 +1,8 @@
 """@docstring
+@brief Tests lattice class
 @author Nathan A. Mahynski
 @date 12/31/2016
 @filename test_lattice.py
-@brief Tests lattice class
 """
 
 import sys, unittest

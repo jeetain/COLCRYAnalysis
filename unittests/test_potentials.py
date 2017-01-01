@@ -1,8 +1,8 @@
 """@docstring
+@brief Tests for potential functions
 @author Nathan A. Mahynski
 @date 12/31/2016
 @filename test_potentials.py
-@brief Tests for potential functions
 """
 
 import sys, unittest

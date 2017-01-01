@@ -1,9 +1,11 @@
 """@docstring
-@brief Use this file ot generate "standard" library of binary superlattices.
+@brief Use this file ot generate "standard" library of binary superlattices using crystals_lib.py.
 @author Nathan A. Mahynski
 @date 10/23/2015
 @filename make.py
 """
+
+VMD_PATH = "/usr/local/bin/vmd-1.8.7"
 
 import numpy as np
 import crystals_lib as cr
@@ -35,7 +37,7 @@ class Atom:
 
 def choose_crystal (crystal):
 	"""
-	Choose which crystal to manufacture.
+	Choose which crystal to manufacture from crystals_lib.py.
 
 	Parameters
 	----------
@@ -134,6 +136,12 @@ def make_supercell (a_coords, b_coords, box, xr=3, yr=3, zr=3):
 		Coordinates of species B
 	box : ndarray
 		Simulation box size
+	xr : int
+		X-replicates (default = 3)
+	yr : int
+		Y-replicates (default = 3)
+	zr : int
+		Z-replicates (default = 3)
 
 	Returns
 	-------
@@ -261,7 +269,7 @@ def make (name_a, stoich_a, name_b, stoich_b, prefix, suffix, reverse = False):
 			Nb += 1.0
 	V = new_box[0]*new_box[1]*new_box[2]
 
-	os.system("/usr/local/bin/vmd-1.8.7 < "+name+"/"+name+".tcl")
+	os.system(str(VMD_PATH)+" < "+name+"/"+name+".tcl")
 	for itype, Npairs in zip(("aa", "bb", "ab"), ((Na-1)/2.0, (Nb-1)/2.0, Nb)):
 		stoich = Nb/Na
 
