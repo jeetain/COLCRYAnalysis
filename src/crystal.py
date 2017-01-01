@@ -6,7 +6,7 @@
 """
 
 import numpy as np
-import json
+import json, copy
 
 class Lattice:
 	"""
@@ -43,6 +43,19 @@ class Lattice:
 
 		return self.data["energy"] < other.data["energy"]
 
+	def __gt__(self, other):
+		"""
+		Compare two classes based on their energy
+
+		Parameters
+		----------
+		other : lattice
+			Lattice to compare against
+
+        """
+
+		return self.data["energy"] > other.data["energy"]
+
 	def assign (self, n=2, dim=3, stoich=None, name="none"):
 		"""
 		Set basic information about a lattice class
@@ -59,11 +72,12 @@ class Lattice:
 			Name of lattice (default="none")
 
         """
-	
+
 		stoich = stoich or [1,1]
 
-		assert (dim in [2, 3]), "valid dimensions are 2, 3"
-		assert (n >= 1), "must have at least one component"
+		if (dim not in [2, 3]): raise ("Valid dimensions are 2, 3")
+		if (n < 1): raise ("Must have at least one component")
+		if (len(stoich) != n): raise ("Must have stoichiometric ratio for each component")
 
 		self.meta["nspec"] = n
 		self.meta["dim"] = dim
@@ -98,34 +112,38 @@ class Lattice:
 
         """
 
-		assert (len(stoich) == self.meta["nspec"]), "must specify stoichiometry for each species"
+		if (len(stoich) != self.meta["nspec"]): raise ("Must specify stoichiometry for each species")
 		self.meta["stoich"] = np.array(stoich, dtype=np.int)
 
 	def set_potential (self, i, j, u_func):
 		"""
-		Set the pair potential function, U(r), for species i and j
+		Set the pair potential function, U(r), for species i and j.
+		Creates a copy of u_func and assigns it internally.
 
 		Parameters
 		----------
 		i : int
-			Species index (0 <= i < n)
+			Species index (1 <= i <= n)
 		j : int
-			Species index (0 <= j < n)
+			Species index (1 <= j <= n)
 		u_func : function
 			Should be a callable function such that u_func(r) returns the pair potential as a function of interparticle separation distance
 
         """
 
+		i -= 1
+		j -= 1
+
 		if ("ppot" not in self.data):
 			self.data["ppot"] = [ [dict() for x in range(self.meta["nspec"])] for y in range(self.meta["nspec"]) ]
 
-		assert (i >= 0), "index i out of range"
-		assert (i < self.meta["nspec"]), "index i out of range"
-		assert (j >= 0), "index j out of range"
-		assert (j < self.meta["nspec"]), "index j out of range"
+		if (i < 0): raise("Index i out of range")
+		if (i >=self.meta["nspec"]): raise("Index i out of range")
+		if (j < 0): raise("Index j out of range")
+		if (j >= self.meta["nspec"]): raise("Index j out of range")
 
-		self.data["ppot"][i][j]["func"] = u_func
-		self.data["ppot"][j][i]["func"] = u_func
+		self.data["ppot"][i][j]["func"] = copy.deepcopy(u_func)
+		self.data["ppot"][j][i]["func"] = copy.deepcopy(u_func)
 
 	def add_rdf (self, i, j, r, gr, ni, nj, V):
 		"""
@@ -134,9 +152,9 @@ class Lattice:
 		Parameters
 		----------
 		i : int
-			Species index (0 <= i < self.meta["nspec"])
+			Species index (1 <= i <= self.meta["nspec"])
 		j : int
-			Species index (0 <= j < self.meta["nspec"])
+			Species index (1 <= j <= self.meta["nspec"])
 		r : ndarray
 			Midpoint of rbins
 		gr : ndarray
@@ -150,14 +168,17 @@ class Lattice:
 
 		"""
 
+		i -= 1
+		j -= 1
+
 		if ("rdf" not in self.data):
 			self.data["rdf"] = [ [dict() for x in range(self.meta["nspec"])] for y in range(self.meta["nspec"]) ]
 
-		assert (i >= 0), "index i out of range"
-		assert (i < self.meta["nspec"]), "index i out of range"
-		assert (j >= 0), "index j out of range"
-		assert (j < self.meta["nspec"]), "index j out of range"
-		assert (V > 0), "volume <= 0"
+		if (i < 0): raise ("Index i out of range")
+		if (i >= self.meta["nspec"]): raise ("Index i out of range")
+		if (j < 0): raise ("Index j out of range")
+		if (j >= self.meta["nspec"]): raise ("Index j out of range")
+		if (V <= 0): raise ("Volume <= 0")
 
 		self.data["rdf"][i][j]["r"] = np.array(r)
 		self.data["rdf"][i][j]["gr"] = np.array(gr)
@@ -177,9 +198,9 @@ class Lattice:
 		Parameters
 		----------
 		i : int
-			Species index (0 <= i < self.meta["nspec"]) of selection 1
+			Species index (1 <= i <= self.meta["nspec"]) of selection 1
 		j : int
-			Species index (0 <= j < self.meta["nspec"]) of selection 2
+			Species index (1 <= j <= self.meta["nspec"]) of selection 2
 		filename : str
 			Filename containing (r, g(r)) in columns
 		ni : int
@@ -204,9 +225,9 @@ class Lattice:
 		Parameters
 		----------
 		i : int
-			Species index (0 <= i < self.meta["nspec"]) of selection 1
+			Species index (1 <= i <= self.meta["nspec"]) of selection 1
 		j : int
-			Species index (0 <= j < self.meta["nspec"]) of selection 2
+			Species index (1 <= j <= self.meta["nspec"]) of selection 2
 		filename : str
 			Filename containing (r, g(r)) in columns
 
@@ -217,7 +238,7 @@ class Lattice:
 		f.close()
 		f = open(filename, 'r')
 		xx = f.readline().strip().split()
-		assert (len(xx) == 4), "bad formatting in g(r) file"
+		if (len(xx) != 4): raise ("Bad formatting in g(r) file")
 		ni, nj, V = int(xx[1]), int(xx[2]), float(xx[3])
 		self.add_rdf(i,j,r,gr,ni,nj,V)
 
@@ -235,11 +256,11 @@ class Lattice:
 
 		for i in xrange(0, self.meta["nspec"]):
 			for j in xrange(0, self.meta["nspec"]):
-				assert ("gr" in self.data["rdf"][i][j]), "g(r) not all set"
-				assert ("r" in self.data["rdf"][i][j]), "g(r) not all set"
-				assert ("V" in self.data["rdf"][i][j]), "g(r) not all set"
-				assert ("Ni" in self.data["rdf"][i][j]), "g(r) not all set"
-				assert ("Nj" in self.data["rdf"][i][j]), "g(r) not all set"
+				if ("gr" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
+				if ("r" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
+				if ("V" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
+				if ("Ni" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
+				if ("Nj" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
 
 		obj = {}
 		obj["meta"] = copy.deepcopy(self.meta)
@@ -283,7 +304,7 @@ class Lattice:
 				V = obj["data"]["rdf"][i][j]["V"]
 				ni = obj["data"]["rdf"][i][j]["Ni"]
 				nj = obj["data"]["rdf"][i][j]["Nj"]
-				self.add_rdf (i,j,r,gr,ni,nj,V)
+				self.add_rdf (i+1,j+1,r,gr,ni,nj,V)
 
 	def energy(self, n_react):
 		"""
@@ -296,7 +317,7 @@ class Lattice:
 
 		"""
 
-		assert (len(n_react) == self.data["nspec"]), "number of species must match"
+		if (len(n_react) != self.data["nspec"]): raise ("Number of species must match")
 
 		U = 0.0
 
@@ -305,12 +326,12 @@ class Lattice:
 
 		for i in xrange(0, self.meta["nspec"]):
 			for j in xrange(0, self.meta["nspec"]):
-				assert ("func" in self.data["ppot"][i][j]), "potentials not all set"
-				assert ("gr" in self.data["rdf"][i][j]), "g(r) not all set"
-				assert ("r" in self.data["rdf"][i][j]), "g(r) not all set"
-				assert ("V" in self.data["rdf"][i][j]), "g(r) not all set"
-				assert ("Ni" in self.data["rdf"][i][j]), "g(r) not all set"
-				assert ("Nj" in self.data["rdf"][i][j]), "g(r) not all set"
+				if ("func" not in self.data["ppot"][i][j]): raise ("Potentials not all set")
+				if ("gr" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
+				if ("r" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
+				if ("V" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
+				if ("Ni" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
+				if ("Nj" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
 
 		for i in xrange(0, self.meta["nspec"]):
 			for j in xrange(i, self.meta["nspec"]):
@@ -322,13 +343,8 @@ class Lattice:
 					jac = 4*np.pi*(rv**2)
 
 				# compute energy
-				"""
-				u = np.empty(len(rv), dtype=np.float)
-				for ri in len(u):
-					u[ri] = self.data["ppot"][i][j]["func"](rv[ri])
-				"""
 				u = self.data["ppot"][i][j]["func"](rv)
-				
+
 				# rdf averaging over density excludes self if i == j
 				nj = self.data["rdf"][i][j]["Nj"]
 				if (i == j):
