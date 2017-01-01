@@ -318,7 +318,7 @@ class Lattice:
 				rv = self.data["rdf"][i][j]["r"]
 				if (self.meta["dim"] == 2):
 					jac = 2*np.pi*rv
-				elif (self.meta["dim"] == 2):
+				elif (self.meta["dim"] == 3):
 					jac = 4*np.pi*(rv**2)
 
 				# compute energy
