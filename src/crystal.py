@@ -5,9 +5,9 @@
 @filename crystal.py
 """
 
-VMD_PATH = "/Applications/VMD\ 1.9.2.app/Contents/MacOS/startup.command"
-#"/usr/local/bin/vmd-1.8.7"
 import crystal_lib as cr
+import numpy as np
+import os, sys
 
 class Crystal (object):
     """
@@ -22,7 +22,7 @@ class Crystal (object):
     	"""
 
     	def __init__ (self, atom_type, atom_pos):
-    		"""
+            """
     		Initialize.
 
     		Parameters
@@ -30,24 +30,30 @@ class Crystal (object):
     		atom_type : str
     			Atom type
     		atom_pos : array or ndarray
-    			Atom's coordinates in dim-D space
+    			Atom's coordinates in 3D space
 
     		"""
 
-            self.dim = dim
-    		self.type = atom_type
-    		self.pos = np.array(atom_pos)
-    		if (len(self.pos) != dim) raise ("Requires 3D coordinates for an atom")
+            self.type = atom_type
+            self.pos = np.array(atom_pos)
+            if (len(self.pos) != 3): raise ("Requires 3D coordinates for an atom")
 
-    def __init__ (self):
+    def __init__ (self, vmd_path="/Applications/VMD\ 1.9.2.app/Contents/MacOS/startup.command"):
         """
         Initialize.
 
+        Parameters
+        ----------
+        vmd_path : str
+            Absolute path to VMD executable that will be used to measure g(r)
+
         """
+
+        self.vmd_path = vmd_path
 
         return
 
-    def make (self, name, prefix=None, repl=3):
+    def make (self, name, repl=5, cp={"sig_aa":1.0, "sig_ab":1.0, "sig_bb":1.0}, prefix=None):
         """
         Factory to decide which crystal to manufacture.
 
@@ -55,22 +61,26 @@ class Crystal (object):
         ----------
         name : str
             Name of the crystal to make
+        repl : int
+            Number of replicates in each direction to make of single cell to create supercell (default = 5)
+        cp : dict
+            Creates close-packed structure subject to packing where sig_ij are given in this dict (default = "sig_aa":1.0, "sig_ab":1.0, "sig_bb":1.0})
         prefix : str
             Filename prefix to print .xyz and .rdf results to (defaults to name)
-        repl : int
-            Number of replicates in each direction to make of single cell to create supercell (default = 3)
 
         """
 
         if (prefix == None): prefix = name
+        if (("sig_aa" not in cp) or ("sig_ab" not in cp) or ("sig_bb" not in cp)): raise Exception ("cp must contain hard-sphere contact distance for all i-j pairs")
 
         try:
             a_coords, b_coords, box, a_type, b_type = self.__factory__ (name)
-            atoms, new_box = self.__supercell__ (a_coords, b_coords, box, repl, repl, repl)
+            factor = self.__scale_to_hs__ (a_coords, b_coords, box, cp)
+            atoms, new_box = self.__supercell__ (a_coords, b_coords, box, factor, repl, repl, repl)
             self.__print_xyz__ (atoms, new_box, prefix+'.xyz')
-            self.__get_rdf__ (prefix, new_box)
+            self.__get_rdf__ (atoms, new_box, prefix)
         except Exception as e:
-            raise Exception ("Unable to make "+name+" to "+prefix+" : "+str(e))
+            raise Exception ("Unable to make "+name+" : "+str(e))
 
     def __factory__ (self, crystal):
         """
@@ -118,7 +128,44 @@ class Crystal (object):
 
         return a_coords, b_coords, box, a_type, b_type
 
-    def __supercell__ (self, a_coords, b_coords, box, xr=3, yr=3, zr=3):
+    def __scale_to_hs__ (self, a_coords, b_coords, box, cp):
+        """
+    	Scale a cell to make hard-sphere contact.
+
+    	Parameters
+    	----------
+    	a_coords : ndarray
+    		Coordinates of species A
+    	b_coords : ndarray
+    		Coordinates of species B
+    	box : ndarray
+    		Simulation box size
+        cp : dict
+            Creates close-packed structure subject to packing where sig_ij are given in this dict (default = sig_aa:1.0, sig_ab:1.0, sig_bb:1.0})
+
+        Returns
+        -------
+        double
+            Factor to scale coordinates and box by to reach hard-sphere contact
+
+        """
+
+        factor = np.inf
+        for ac,bc,sig in [(a_coords, a_coords, cp["sig_aa"]), (a_coords, b_coords, cp["sig_ab"]), (b_coords, b_coords, cp["sig_bb"])]:
+            for pk1 in ac:
+                for pk2 in bc:
+                    if (not np.all(pk1 == pk2)):
+                        d2 = 0.0
+                        for i in xrange(3):
+                            dx = np.abs(pk1[i] - pk2[i])
+                            while (dx > box[i]/2.0):
+                                dx -= box[i]
+                            d2 += dx*dx
+                        factor = np.min([factor,np.sqrt(d2)/sig])
+
+        return 1.0/factor
+
+    def __supercell__ (self, a_coords, b_coords, box, factor, xr=5, yr=5, zr=5):
         """
     	Take a cell and make an orthorhombic periodic supercell.
 
@@ -130,12 +177,14 @@ class Crystal (object):
     		Coordinates of species B
     	box : ndarray
     		Simulation box size
+        factor : double
+            Scaling factor
     	xr : int
-    		X-replicates (default = 3)
+    		X-replicates (default = 5)
     	yr : int
-    		Y-replicates (default = 3)
+    		Y-replicates (default = 5)
     	zr : int
-    		Z-replicates (default = 3)
+    		Z-replicates (default = 5)
 
     	Returns
     	-------
@@ -146,9 +195,9 @@ class Crystal (object):
 
     	"""
 
-    	a_c = np.array(a_coords)
-    	b_c = np.array(b_coords)
-    	sim_box = np.array(box)
+    	a_c = np.array(a_coords)*factor
+    	b_c = np.array(b_coords)*factor
+    	sim_box = np.array(box)*factor
     	super_a = np.zeros((xr*yr*zr*len(a_c), 3), dtype=np.float64)
     	super_b = np.zeros((xr*yr*zr*len(b_c), 3), dtype=np.float64)
     	a_ind = 0
@@ -162,13 +211,13 @@ class Crystal (object):
     				a_ind += len(a_c)
     				b_ind += len(b_c)
 
-    	new_box = box*np.array([xr, yr, zr])
+    	new_box = box*np.array([xr, yr, zr])*factor
     	atoms = []
     	for atom_pos in super_a:
-    		new_atom = Atom ("A", atom_pos)
+    		new_atom = self.Atom ("A", atom_pos)
     		atoms.append(new_atom)
     	for atom_pos in super_b:
-    		new_atom = Atom ("B", atom_pos)
+    		new_atom = self.Atom ("B", atom_pos)
     		atoms.append(new_atom)
 
     	return atoms, new_box
@@ -189,23 +238,24 @@ class Crystal (object):
     	"""
 
     	f = open(filename, 'w')
-        if (!f.is_open) raise ("Unable to open file "+filename)
     	f.write(str(len(atoms))+"\n"+str(box[0])+"\t"+str(box[1])+"\t"+str(box[2])+"\n")
     	for atom in atoms:
     		pos = atom.pos
     		f.write(str(atom.type)+"\t"+str(pos[0])+"\t"+str(pos[1])+"\t"+str(pos[2])+"\n")
     	f.close()
 
-    def __get_rdf__ (self, prefix, new_box):
+    def __get_rdf__ (self, atoms, new_box, prefix):
         """
     	Make a supercell of a given binary crystal from built-in library.
 
     	Parameters
     	----------
-    	prefix : str
-            Filename prefix of .xyz, .rdf, .tcl files
+        atoms : array
+    		Array of all atoms in the system
         new_box : array
             Supercell dimensions
+    	prefix : str
+            Filename prefix of .xyz, .rdf, .tcl files
 
     	"""
 
@@ -214,14 +264,14 @@ class Crystal (object):
 
     	# Analysis with VMD
     	f = open(prefix+".tcl", 'w')
-    	f.write(news)
+    	f.write(master_gr_string)
     	f.close()
 
     	Na = np.sum([1 if a.type == "A" else 0 for a in atoms])
     	Nb = len(atoms) - Na
     	V = new_box[0]*new_box[1]*new_box[2]
 
-    	os.system(str(VMD_PATH)+" < "+prefix+".tcl")
+    	os.system(str(self.vmd_path)+" < "+prefix+".tcl")
 
         # Add comment line to results
         for i,j,Ni,Nj in [('a','a',Na,Na), ('a','b',Na,Nb), ('b','b',Nb,Nb)]:

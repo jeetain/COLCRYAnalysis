@@ -75,9 +75,9 @@ class Lattice:
 
 		stoich = stoich or [1,1]
 
-		if (dim not in [2, 3]): raise ("Valid dimensions are 2, 3")
-		if (n < 1): raise ("Must have at least one component")
-		if (len(stoich) != n): raise ("Must have stoichiometric ratio for each component")
+		if (dim not in [2, 3]): raise Exception ("Valid dimensions are 2, 3")
+		if (n < 1): raise Exception ("Must have at least one component")
+		if (len(stoich) != n): raise Exception ("Must have stoichiometric ratio for each component")
 
 		self.meta["nspec"] = n
 		self.meta["dim"] = dim
@@ -112,7 +112,7 @@ class Lattice:
 
         """
 
-		if (len(stoich) != self.meta["nspec"]): raise ("Must specify stoichiometry for each species")
+		if (len(stoich) != self.meta["nspec"]): raise Exception ("Must specify stoichiometry for each species")
 		self.meta["stoich"] = np.array(stoich, dtype=np.int)
 
 	def set_potential (self, i, j, u_func):
@@ -137,10 +137,10 @@ class Lattice:
 		if ("ppot" not in self.data):
 			self.data["ppot"] = [ [dict() for x in range(self.meta["nspec"])] for y in range(self.meta["nspec"]) ]
 
-		if (i < 0): raise("Index i out of range")
-		if (i >=self.meta["nspec"]): raise("Index i out of range")
-		if (j < 0): raise("Index j out of range")
-		if (j >= self.meta["nspec"]): raise("Index j out of range")
+		if (i < 0): raise Exception ("Index i out of range")
+		if (i >=self.meta["nspec"]): raise Exception ("Index i out of range")
+		if (j < 0): raise Exception ("Index j out of range")
+		if (j >= self.meta["nspec"]): raise Exception ("Index j out of range")
 
 		self.data["ppot"][i][j]["func"] = copy.deepcopy(u_func)
 		self.data["ppot"][j][i]["func"] = copy.deepcopy(u_func)
@@ -174,11 +174,11 @@ class Lattice:
 		if ("rdf" not in self.data):
 			self.data["rdf"] = [ [dict() for x in range(self.meta["nspec"])] for y in range(self.meta["nspec"]) ]
 
-		if (i < 0): raise ("Index i out of range")
-		if (i >= self.meta["nspec"]): raise ("Index i out of range")
-		if (j < 0): raise ("Index j out of range")
-		if (j >= self.meta["nspec"]): raise ("Index j out of range")
-		if (V <= 0): raise ("Volume <= 0")
+		if (i < 0): raise Exception ("Index i out of range")
+		if (i >= self.meta["nspec"]): raise Exception ("Index i out of range")
+		if (j < 0): raise Exception ("Index j out of range")
+		if (j >= self.meta["nspec"]): raise Exception ("Index j out of range")
+		if (V <= 0): raise Exception ("Volume <= 0")
 
 		self.data["rdf"][i][j]["r"] = np.array(r)
 		self.data["rdf"][i][j]["gr"] = np.array(gr)
@@ -238,7 +238,7 @@ class Lattice:
 		f.close()
 		f = open(filename, 'r')
 		xx = f.readline().strip().split()
-		if (len(xx) != 4): raise ("Bad formatting in g(r) file")
+		if (len(xx) != 4): raise Exception ("Bad formatting in g(r) file")
 		ni, nj, V = int(xx[1]), int(xx[2]), float(xx[3])
 		self.add_rdf(i,j,r,gr,ni,nj,V)
 
@@ -256,15 +256,16 @@ class Lattice:
 
 		for i in xrange(0, self.meta["nspec"]):
 			for j in xrange(0, self.meta["nspec"]):
-				if ("gr" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
-				if ("r" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
-				if ("V" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
-				if ("Ni" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
-				if ("Nj" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
+				if ("gr" not in self.data["rdf"][i][j]): raise Exception ("g(r) not all set")
+				if ("r" not in self.data["rdf"][i][j]): raise Exception ("g(r) not all set")
+				if ("V" not in self.data["rdf"][i][j]): raise Exception ("g(r) not all set")
+				if ("Ni" not in self.data["rdf"][i][j]): raise Exception ("g(r) not all set")
+				if ("Nj" not in self.data["rdf"][i][j]): raise Exception ("g(r) not all set")
 
 		obj = {}
 		obj["meta"] = copy.deepcopy(self.meta)
 		obj["data"] = copy.deepcopy(self.data)
+		obj["meta"]["stoich"] = obj["meta"]["stoich"].tolist()
 		if ("ppot" in obj["data"]):
 			del obj["data"]["ppot"]
 
@@ -274,7 +275,7 @@ class Lattice:
 				obj["data"]["rdf"][i][j]["gr"] = obj["data"]["rdf"][i][j]["gr"].tolist()
 
 		with open(filename, 'w') as f:
-			json.dump(obj, f)
+			json.dump(obj, f, sort_keys=True, indent=4)
 
 	def load_json (self, filename):
 		"""
@@ -290,11 +291,14 @@ class Lattice:
 		self.clear()
 
 		with open(filename, 'r') as f:
-			data = json.load(f)
+			obj = json.load(f)
 
 		# get metadata
-		for x in data["meta"]:
-			self.meta[x] = data["meta"][x]
+		for x in obj["meta"]:
+			if (x == "stoich"):
+				self.meta[x] = np.array(obj["meta"][x])
+			else:
+				self.meta[x] = obj["meta"][x]
 
 		# get rdf info from data
 		for i in xrange(0, self.meta["nspec"]):
@@ -317,21 +321,22 @@ class Lattice:
 
 		"""
 
-		if (len(n_react) != self.data["nspec"]): raise ("Number of species must match")
-
+		n_react = np.array(n_react)
 		U = 0.0
+
+		if (len(n_react) != self.meta["nspec"]): raise Exception ("Number of species must match")
 
 		# limiting reactant calculation
 		nm = np.min(n_react.astype(int)/self.meta["stoich"].astype(int)) # integer division takes care of rounding
 
 		for i in xrange(0, self.meta["nspec"]):
 			for j in xrange(0, self.meta["nspec"]):
-				if ("func" not in self.data["ppot"][i][j]): raise ("Potentials not all set")
-				if ("gr" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
-				if ("r" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
-				if ("V" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
-				if ("Ni" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
-				if ("Nj" not in self.data["rdf"][i][j]): raise ("g(r) not all set")
+				if ("func" not in self.data["ppot"][i][j]): raise Exception ("Potentials not all set")
+				if ("gr" not in self.data["rdf"][i][j]): raise Exception ("g(r) not all set")
+				if ("r" not in self.data["rdf"][i][j]): raise Exception ("g(r) not all set")
+				if ("V" not in self.data["rdf"][i][j]): raise Exception ("g(r) not all set")
+				if ("Ni" not in self.data["rdf"][i][j]): raise Exception ("g(r) not all set")
+				if ("Nj" not in self.data["rdf"][i][j]): raise Exception ("g(r) not all set")
 
 		for i in xrange(0, self.meta["nspec"]):
 			for j in xrange(i, self.meta["nspec"]):
@@ -350,7 +355,7 @@ class Lattice:
 				if (i == j):
 					nj -= 1
 
-				U += self.meta["stoich"]*np.trapz(self.data["rdf"][i][j]["gr"]*jac*u, x=rv)*(nj/self.data["rdf"][i][j]["V"])
+				U += self.meta["stoich"][i]*np.trapz(self.data["rdf"][i][j]["gr"]*jac*u, x=rv)*(nj/self.data["rdf"][i][j]["V"])
 
 		U *= nm/2.0
 		self.data["energy"] = U
