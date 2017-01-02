@@ -29,3 +29,10 @@ $ git clone https://github.com/mahynski/COLCRYAnalysis.git
 1. Numpy (http://www.numpy.org/)
 
 ---
+
+## Unittesting
+
+```
+$ cd unittests
+$ python run_tests.py
+```
