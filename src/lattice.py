@@ -30,7 +30,7 @@ class Lattice:
 		if (json_file != "none"):
 			self.load_json(json_file)
 
-	def __lt__(self, other):
+	def __lt__ (self, other):
 		"""
 		Compare two classes based on their energy
 
@@ -43,7 +43,7 @@ class Lattice:
 
 		return self.data["energy"] < other.data["energy"]
 
-	def __gt__(self, other):
+	def __gt__ (self, other):
 		"""
 		Compare two classes based on their energy
 
@@ -55,6 +55,17 @@ class Lattice:
         """
 
 		return self.data["energy"] > other.data["energy"]
+
+	def __repr__ (self):
+		"""
+		Produce a string representation of the class
+
+		"""
+
+		if ("name" in self.meta):
+			return self.meta["name"]
+		else:
+			return "None"
 
 	def assign (self, n=2, dim=3, stoich=None, name="none"):
 		"""
@@ -310,7 +321,7 @@ class Lattice:
 				nj = obj["data"]["rdf"][i][j]["Nj"]
 				self.add_rdf (i+1,j+1,r,gr,ni,nj,V)
 
-	def energy(self, n_react):
+	def energy (self, n_react):
 		"""
 		Compute the energy of the lattice given the pair potentials currently set
 
