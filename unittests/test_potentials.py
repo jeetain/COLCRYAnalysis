@@ -6,9 +6,9 @@
 """
 
 import sys, unittest
-sys.path.append('../src/')
-from potentials import *
 import numpy as np
+sys.path.append('../../')
+from COLCRYAnalysis.analysis.potential import *
 
 class TestLJLambda(unittest.TestCase):
 	"""

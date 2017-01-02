@@ -6,9 +6,9 @@
 """
 
 import sys, unittest
-sys.path.append('../src/')
-from potentials import *
-from crystal import *
+sys.path.append('../../')
+from COLCRYAnalysis.analysis.potential import *
+from COLCRYAnalysis.analysis.lattice import *
 
 class TestLattice(unittest.TestCase):
 	"""
